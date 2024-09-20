@@ -4,7 +4,7 @@ from py_tailwind_utils import *
 
 ui_app_trmap = []
 
-btn = oj.Mutable.Button(key="abtn", text="Click me", twsty_tags=[bg/green/1])
+btn = oj.Mutable.Button(key="abtn", text="Click me", twsty_tags=[bg/green/100])
 
 tlc = oj.Mutable.Container(key="tlc", childs = [btn])
 

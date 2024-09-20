@@ -12,7 +12,7 @@ from functools import partial
 import functools
 import traceback
 from typing import NamedTuple, Any
-
+import types
 
 
 
@@ -127,7 +127,7 @@ def CfgLoopRunner(func):
 
     '''
     @functools.wraps(func)
-    def signal_wrapper(*args, **kwargs):
+    async def signal_wrapper(*args, **kwargs):
         '''
         wrap ui_action_signal to follow
         model_update_view cycle
@@ -141,18 +141,38 @@ def CfgLoopRunner(func):
         wp = msg.page
 
         #analytics_dashboard uses dummy function for event handler
-        res_func = func(*args, **kwargs)
+        print("In ojr: wrapper func ", func)
+        res_func = await func(*args, **kwargs)
+        
+        
         if res_func == None:
             # no further action required
-            return 
-        sspath, svalue = res_func
+            return
+        res_value = None
+        
+        
+        # transistion react function should return a list or generators
+        if isinstance(res_func, types.GeneratorType):
+            res_value = res_func
+        elif type(res_func) is list:
+            res_value= res_func
+
+        else:
+            assert False
+            
+            
+        
+        #sspath, svalue = [_ for _ in res_func]
         # if not value: 
         #     value = msg.value
         try:
-            logger.debug(f"===============================================BEGIN REACT LOOP================================>")
-            logger.debug(f"reacting on event = {func}, uipath={sspath}, uivalue={svalue}")
-            wp.update_uistate(sspath, svalue)
-            wp.update_loop()
+
+            for sspath, svalue in res_func:
+                logger.debug(f"===============================================BEGIN REACT LOOP================================>")
+                logger.debug(f"reacting on event = {func}, uipath={sspath}, uivalue={svalue}")
+                wp.update_uistate(sspath, svalue)
+                await wp.update_loop()
+                
             logger.debug(f"===============================================END REACT LOOP================================>")
 
         except Exception as e:

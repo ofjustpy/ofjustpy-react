@@ -41,3 +41,10 @@ The execution flow
 
 - wp.update_uistate(spath, svalue)
   
+
+Bugs and fixes
+--------------
+
+#. react.py: using await for wrapper func
+
+   res_func = await func(*args, **kwargs)

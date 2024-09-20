@@ -23,6 +23,10 @@ from py_tailwind_utils import (dget,
                                )
 from dpath import PathNotFound
 from ofjustpy.htmlcomponents_impl import id_assigner
+from ofjustpy.WebPage_TF import gen_WebPage_type
+from ofjustpy.generate_WebPage_response_mixin import (ResponsiveStatic_SSR_ResponseMixin,
+                                              ResponsiveStatic_CSR_ResponseMixin
+                                              )
 def is_mod_function(mod, func):
     return inspect.isfunction(func) and inspect.getmodule(func) == mod
 
@@ -195,7 +199,7 @@ def refresh_uistate(app_ui_trmap, uistate, stubStore):
     logger.debug("=========== done refresh_uistate  ===============")
     return inactive_kpaths
 
-from ofjustpy.WebPage_TF import gen_WebPage_type
+
 
 class WebPage_React_Mixin:
     def __init__(self, *args, **kwargs
@@ -287,8 +291,14 @@ class WebPage_React_Mixin:
                 f"Phase 1: update-uistate:   update ui: key/path={spath};  old_val = {old_val};  new_value= {value}")
             # dupdate has issues; dnew works just as well; 
             # dupdate(self.uistate, spath, value)
+            # debug it 
             dnew(self.uistate, spath, value)
-
+            print("post update uistate ", self.uistate)
+            print("looking into new changed history")
+            for _ in self.uistate.get_changed_history():
+                print(_)
+            print ("DOne ")
+            
         except KeyError as e:
             print (f"calling dnew:uistate {spath} {value}")
             dnew(self.uistate, spath, value)
@@ -302,7 +312,7 @@ class WebPage_React_Mixin:
     def build_list(self):
         return super().build_list()
     
-    def update_loop(self):
+    async def update_loop(self):
         """
         user has changed the state of ui input component.
         this has led to change in values in  uistate.
@@ -316,31 +326,41 @@ class WebPage_React_Mixin:
 
         logger.debug("*********** Begin Phase 2: update appstate (from ui)")
         print ("Begin loop: ui-change-history = ", [_ for _ in self.uistate.get_changed_history()])
+        print ("Begin loop: ui_app_trmap = ", self.ui_app_trmap)
         
         for _ in self.uistate.get_changed_history():
             uival = dget(self.uistate, _)
             logger.debug(f"             changed ui path: {_}")
             app_path = None
             appval = None
-            if dsearch(self.ui_app_trmap, _):
+            # dsearch returns an iterator
+            if list(dsearch(self.ui_app_trmap, _)):
                 app_path, value_tranformer = dget(self.ui_app_trmap, _)
                 appval = uival
                 if value_tranformer:
                     appval = value_tranformer(uival)
-            elif dsearch(self.appstate, _):
+            elif list(dsearch(self.appstate, _)):
                 app_path = _
                 appval = uival
 
 
             if app_path:
-                if dsearch(self.appstate, _):
+                if list(dsearch(self.appstate, _)):
                     logger.debug(f"            matching app path:update: {app_path} with appval={appval}")
                     # dupdate has issues with clear; dnew works fine
                     #dupdate(self.appstate, app_path,  appval)
                     dnew(self.appstate, app_path,  appval)
+                    logger.debug(f"            post-update-val {app_path} with appval={appval} : {dget(self.appstate, app_path)}", )
+                    
+                                 
                 else:
                     logger.debug(f"            matching app path:new: {app_path} with appval={appval}")
                     dnew(self.appstate, app_path,  appval)
+                    logger.debug(f"            post-new-val {app_path} with appval={appval} {dget(self.appstate, app_path)}")
+                    if app_path == " /update_sty_hcobj/utility_class":
+                        print ("double check id = ", id(self.appstate.update_sty_hcobj.utility_class))
+                        
+                        
                 
             else:
                 logger.debug(f"path {_} does not exists in appstate or in ui_app_trmap: skipping")
@@ -362,7 +382,7 @@ class WebPage_React_Mixin:
             for kpath in appstate_all_changed_paths :
                 logger.debug (f"            visiting appstate path : {kpath}")
                 kval = dget(self.appstate, kpath)
-                if dsearch(self.app_actions_trmap, kpath):
+                if list(dsearch(self.app_actions_trmap, kpath)):
 
                     #TODO: handle series of actions
                     action_fns = dget(self.app_actions_trmap, kpath)
@@ -406,8 +426,10 @@ class WebPage_React_Mixin:
                             case _:
                                  print("unkown how to update text for : ", target_dbref.html_tag)
                     case UIOps.REDIRECT:
-                        logger.debug(f"in uiops.redirect for : {target_dbref.stub.key} {kval}" )
-                        target_dbref.redirect = kval
+                        logger.debug(f"in uiops.redirect for : target_dbref, " ", {target_dbref.id}, " ",  {kval}" )
+                        await target_dbref.redirect_to_url(kval)
+                        
+                        #target_dbref.redirect = kval
                         #TODO: when it is text vs. placeholder
                         #target_dbref.placeholder = kval
                     case UIOps.DEBUG:
@@ -421,4 +443,7 @@ class WebPage_React_Mixin:
         pass
 
     
-WebPage = id_assigner(gen_WebPage_type(mutableShellMixins = [WebPage_React_Mixin]))
+ResponsiveStatic_CSR_WebPage = id_assigner(gen_WebPage_type(mutableShellMixins = [WebPage_React_Mixin]))
+
+ResponsiveStatic_SSR_WebPage = id_assigner(gen_WebPage_type(generate_WebPage_response_mixin = ResponsiveStatic_SSR_ResponseMixin,
+                                                mutableShellMixins = [WebPage_React_Mixin]))
