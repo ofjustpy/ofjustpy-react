@@ -25,8 +25,8 @@ from dpath import PathNotFound
 from ofjustpy.htmlcomponents_impl import id_assigner
 from ofjustpy.WebPage_TF import gen_WebPage_type
 from ofjustpy.generate_WebPage_response_mixin import (ResponsiveStatic_SSR_ResponseMixin,
-                                              ResponsiveStatic_CSR_ResponseMixin
-                                              )
+                                                      ResponsiveStatic_CSR_ResponseMixin
+                                                      )
 def is_mod_function(mod, func):
     return inspect.isfunction(func) and inspect.getmodule(func) == mod
 
@@ -293,17 +293,9 @@ class WebPage_React_Mixin:
             # dupdate(self.uistate, spath, value)
             # debug it 
             dnew(self.uistate, spath, value)
-            print("post update uistate ", self.uistate)
-            print("looking into new changed history")
-            for _ in self.uistate.get_changed_history():
-                print(_)
-            print ("DOne ")
             
         except KeyError as e:
-            print (f"calling dnew:uistate {spath} {value}")
             dnew(self.uistate, spath, value)
-            print ("change history  = ", [_ for _ in self.uistate.get_changed_history()])
-            
             logger.debug(
                 f"Phase 1:update_uistate:add-new-path-and-value: update key={spath}, value={value}")
         
@@ -325,8 +317,6 @@ class WebPage_React_Mixin:
         """
 
         logger.debug("*********** Begin Phase 2: update appstate (from ui)")
-        print ("Begin loop: ui-change-history = ", [_ for _ in self.uistate.get_changed_history()])
-        print ("Begin loop: ui_app_trmap = ", self.ui_app_trmap)
         
         for _ in self.uistate.get_changed_history():
             uival = dget(self.uistate, _)
@@ -357,10 +347,6 @@ class WebPage_React_Mixin:
                     logger.debug(f"            matching app path:new: {app_path} with appval={appval}")
                     dnew(self.appstate, app_path,  appval)
                     logger.debug(f"            post-new-val {app_path} with appval={appval} {dget(self.appstate, app_path)}")
-                    if app_path == " /update_sty_hcobj/utility_class":
-                        print ("double check id = ", id(self.appstate.update_sty_hcobj.utility_class))
-                        
-                        
                 
             else:
                 logger.debug(f"path {_} does not exists in appstate or in ui_app_trmap: skipping")
@@ -387,7 +373,6 @@ class WebPage_React_Mixin:
                     #TODO: handle series of actions
                     action_fns = dget(self.app_actions_trmap, kpath)
                     logger.debug(f"       actions invoked: {action_fns}" )
-                    print(f"       actions invoked: {action_fns}" )
                     for action_fn in action_fns:
                         action_fn(self.appstate, kval, self)
 
@@ -407,7 +392,7 @@ class WebPage_React_Mixin:
                     case UIOps.DISABLE:
                         pass
                     case UIOps.UPDATE_NOTICEBOARD:
-                        print("notice board not yet implemented")
+                        pass
                     case UIOps.DECK_SHUFFLE:
                         target_dbref.bring_to_front(kval)
                     case UIOps.UPDATE_CHART:
@@ -438,7 +423,6 @@ class WebPage_React_Mixin:
 
         self.appstate.clear_changed_history()
         self.uistate.clear_changed_history()
-        print ("end loop: ui-change-history = ", [_ for _ in self.uistate.get_changed_history()])
         
         pass
 

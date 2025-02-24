@@ -141,7 +141,6 @@ def CfgLoopRunner(func):
         wp = msg.page
 
         #analytics_dashboard uses dummy function for event handler
-        print("In ojr: wrapper func ", func)
         res_func = await func(*args, **kwargs)
         
         
@@ -151,7 +150,7 @@ def CfgLoopRunner(func):
         res_value = None
         
         
-        # transistion react function should return a list or generators
+        # transistion: react function should return a list or generators
         if isinstance(res_func, types.GeneratorType):
             res_value = res_func
         elif type(res_func) is list:
