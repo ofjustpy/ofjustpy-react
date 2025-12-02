@@ -13,7 +13,8 @@ logger.setLevel(logging.DEBUG)
 import inspect
 
 from addict_tracking_changes import Dict
-import ofjustpy as oj
+#import kavya as kv
+
 from collections import namedtuple
 from py_tailwind_utils import (dget,
                                dnew,
@@ -25,8 +26,8 @@ from dpath import PathNotFound
 from ofjustpy.htmlcomponents_impl import id_assigner
 from ofjustpy.WebPage_TF import gen_WebPage_type
 from ofjustpy.generate_WebPage_response_mixin import (ResponsiveStatic_SSR_ResponseMixin,
-                                                      ResponsiveStatic_CSR_ResponseMixin
-                                                      )
+                                                   ResponsiveStatic_CSR_ResponseMixin
+                                                   )
 def is_mod_function(mod, func):
     return inspect.isfunction(func) and inspect.getmodule(func) == mod
 
